@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 
 const askAI = async ({
@@ -7,26 +8,40 @@ const askAI = async ({
   phrase: string;
   textContent: any;
 }) => {
-  const openai = new OpenAI();
-  openai.apiKey = process.env.OPENAI_API_KEY ?? "";
+  // const openai = new OpenAI();
+  // openai.apiKey = process.env.OPENAI_API_KEY ?? "";
 
-  const completion = await openai.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content:
-          " If asked who are you tell them you are FactGuru and you are a fact checking AI with no bias. If not Fact check the given phrase with the below given data if both matches just tell its a fact if it dosent match Just tell its not a fact and explain why its not do not repeat the statement and explain at max in 2 sentences. At the end also write how confident are you in 0-10 rating.",
-      },
-      { role: "user", content: `Phrase: ${phrase} \n Data: ${textContent}` },
-    ],
-    model: "gpt-4-turbo",
-    temperature: 2,
-    frequency_penalty: 1,
-    presence_penalty: 1,
-    top_p: 0.5,
+  const genAI = new GoogleGenerativeAI(process.env.API_KEY ?? "");
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction:
+      "If asked who are you tell them you are FactGuru and you are a fact checking AI with no bias. If not Fact check the given phrase with the below given data if both matches just tell its a fact if it dosent match Just tell its not a fact and explain why its not do not repeat the statement and explain at max in 2 sentences.",
   });
-  console.log(completion.choices[0].message.content);
-  return completion.choices[0].message.content;
+
+  // const completion = await openai.chat.completions.create({
+  //   messages: [
+  //     {
+  //       role: "system",
+  //       content:
+  //         " If asked who are you tell them you are FactGuru and you are a fact checking AI with no bias. If not Fact check the given phrase with the below given data if both matches just tell its a fact if it dosent match Just tell its not a fact and explain why its not do not repeat the statement and explain at max in 2 sentences. At the end also write how confident are you in 0-10 rating.",
+  //     },
+  //     { role: "user", content: `Phrase: ${phrase} \n Data: ${textContent}` },
+  //   ],
+  //   model: "gpt-4-turbo",
+  //   temperature: 2,
+  //   frequency_penalty: 1,
+  //   presence_penalty: 1,
+  //   top_p: 0.5,
+  // });
+  // console.log(completion.choices[0].message.content);
+  // return completion.choices[0].message.content;
+
+  const prompt = `Phrase: ${phrase} \n Data: ${textContent}`;
+
+  const result = await model.generateContent(prompt);
+  console.log(result.response.text());
+
+  return result.response.text();
 };
 
 export default askAI;
